@@ -1,0 +1,2 @@
+[console_scripts]
+keyboard = keyboard_sound.cli:main

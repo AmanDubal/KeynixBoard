@@ -1,0 +1,8 @@
+pynput>=1.7.6
+sounddevice>=0.4.6
+soundfile>=0.12.1
+numpy>=1.22
+psutil>=5.9
+
+[extra-formats]
+pydub>=0.25.1

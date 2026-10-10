@@ -1,0 +1,8 @@
+pynput>=1.7.6
+sounddevice>=0.4.6
+soundfile>=0.12.1
+numpy>=1.22
+psutil>=5.9
+# optional, only needed if you load custom MP3/M4A sounds via a URL/path
+# and your system doesn't already have ffmpeg on PATH:
+# pydub>=0.25.1

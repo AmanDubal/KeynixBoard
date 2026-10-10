@@ -1,0 +1,159 @@
+# ⌨️ keyboard-sound
+
+Play satisfying mechanical-keyboard typing sounds — or, for fun, gunfire —
+on **every keystroke, system-wide**, from a dead-simple command line.
+
+```
+keyboard sound list
+keyboard sound thocky activate
+keyboard sound thocky deactivate
+```
+
+The chosen sound plays in the background **until you explicitly run the
+`deactivate` command** — closing the terminal window does NOT stop it.
+
+---
+
+## Built-in sound themes
+
+| Name         | Character |
+|--------------|-----------|
+| `thocky`     | Deep, low-pitched, rounded & satisfyingly muted |
+| `creamy`     | Smooth, buttery, muted, slightly higher pitch than thock |
+| `clacky`     | Bright, crisp, higher-pitched hard-plastic bottom-out |
+| `clicky`     | Loud, sharp mechanical click-jacket sound |
+| `marbly`     | Resonant, glassy "marbles colliding" clack |
+| `silent`     | Heavily dampened, near-silent muffled thock |
+| `mechanical` | Balanced, general-purpose mechanical keyboard sound |
+| `fahh`       | 😂 Just for fun — the "Fahh" meme sound effect plays in full on every single keystroke |
+| `gun_pistol` | 🔫 Every key fires a pistol crack. Backspace = pistol reload |
+| `gun_shotgun`| 🔫 Every key fires a shotgun blast. Backspace = pump-action reload |
+| `gun_sniper` | 🔫 Every key fires a powerful sniper crack+boom. Backspace = bolt-action reload |
+| `gun_rifle`  | 🔫 Every key fires a sharp rifle crack. Backspace = mag-swap + bolt reload |
+
+`thocky`/`creamy`/`clacky`/`clicky`/`marbly`/`mechanical` are built from real,
+openly-licensed mechanical switch recordings (see `ATTRIBUTION.md`). `silent`
+is a heavily filtered/quietened derivative. Each `gun_*` theme plays **the
+same single shot sound on every regular key**, with a **dedicated reload
+sound mapped to Backspace** — and is 100% procedurally generated audio, not
+a real firearm recording, created purely as a fun easter-egg. `fahh` is
+sourced from a short YouTube meme sound effect (see `ATTRIBUTION.md`).
+
+You are **not limited to the built-ins** — see "Custom sounds" below.
+
+---
+
+## Install
+
+Requires Python 3.8+.
+
+```bash
+cd keyboard-sound-app
+pip install -e .
+```
+
+This installs the `keyboard` command plus its dependencies (`pynput` for
+global key capture, `sounddevice`/`soundfile`/`numpy` for low-latency audio
+mixing, `psutil` for clean process control).
+
+> If you plan to use a **custom MP3/M4A** sound via a URL (see below) and it
+> fails to decode, install `ffmpeg` on your system and `pip install pydub`.
+> WAV/FLAC/OGG custom sounds work with no extra setup.
+
+### Platform notes (global key capture)
+
+- **Windows** — works out of the box.
+- **macOS** — the first time you activate, macOS will ask you to grant your
+  terminal app **Accessibility** and/or **Input Monitoring** permission
+  (System Settings → Privacy & Security). Approve it, then re-run the
+  command.
+- **Linux (X11)** — works out of the box in most cases.
+- **Linux (Wayland)** — global key listening is restricted by design on
+  Wayland; depending on your compositor you may need to run your session
+  under Xorg, or grant the relevant portal/input permissions.
+
+---
+
+## Usage
+
+```bash
+# see everything available, and what's currently active
+keyboard sound list
+
+# turn a sound on — keeps running in the background
+keyboard sound clicky activate
+
+# check what's running
+keyboard sound status
+
+# turn it off
+keyboard sound clicky deactivate
+```
+
+Activating a new theme automatically stops whichever one was previously
+running — only one theme plays at a time.
+
+### Options on `activate`
+
+```bash
+keyboard sound thocky activate --volume 1.4
+keyboard sound thocky activate --enter guns        # Enter key always fires the reload click, everything else stays "thocky"
+keyboard sound thocky activate --enter https://example.com/my-enter-ding.wav
+```
+
+- `--volume FLOAT` — playback volume multiplier, `0.0`–`2.0` (default `1.0`).
+- `--enter SOURCE` — override just the **Enter** key's sound with another
+  built-in theme, a URL, or a local file — handy for a distinct "line
+  submitted" ding while the rest of your keys keep their normal theme.
+
+### Custom sounds (your own clip for every key)
+
+`<name>` doesn't have to be a built-in theme — it can be a direct link to an
+audio file you have the rights to use, or a path to a file on your disk:
+
+```bash
+keyboard sound https://example.com/my-click.wav activate
+keyboard sound /home/me/sounds/boop.wav activate
+
+# ...later
+keyboard sound https://example.com/my-click.wav deactivate
+```
+
+The file is downloaded once and cached locally (`~/.config/keyboard-sound/custom_sounds`
+on Linux, `~/Library/Application Support/keyboard-sound` on macOS, `%APPDATA%\keyboard-sound`
+on Windows), so re-activating the same link is instant and works offline afterwards.
+
+---
+
+## How it works
+
+- `activate` resolves the requested theme/URL/file, then launches a small
+  detached background process (`keyboard_sound/daemon.py`) that opens a
+  persistent low-latency audio stream and a global keyboard hook
+  (`pynput`). Its PID and active theme are recorded in a state file.
+- Every keypress is classified as `space` / `enter` / `backspace` / `tab` /
+  generic, and a matching (or randomly-varied, for generic keys) clip is
+  mixed into the output stream — multiple overlapping clips are supported,
+  so fast typing/chords sound natural instead of cutting each other off.
+- `deactivate` looks up the PID from the state file and stops that process;
+  until you do, it keeps running even if you close the terminal.
+
+## Rebuilding / regenerating the bundled sound assets
+
+The `build_cache/` folder (not needed at runtime) contains the scripts used
+to produce `keyboard_sound/sounds/`:
+
+- `build_cache/slice_build.py` — downloads/slices the real Mechvibes packs
+  into `thocky/creamy/clacky/clicky/marbly/mechanical/silent`.
+- `build_cache/synth_guns.py` — procedurally synthesizes the
+  `gun_pistol/gun_shotgun/gun_sniper/gun_rifle` themes.
+- `build_cache/fetch_fahh.py` — downloads and trims the `fahh` meme sound
+  from YouTube.
+
+Re-run either if you want to tweak durations, pick different source packs,
+or regenerate the synthesized gun sounds.
+
+## License
+
+Code: MIT (see `LICENSE`). Bundled audio: see `ATTRIBUTION.md` for full
+per-pack sourcing and licensing details.

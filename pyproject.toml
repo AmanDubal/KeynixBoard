@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "keyboard-sound"
+version = "1.0.0"
+description = "Play satisfying mechanical-keyboard (and silly gunfire) typing sounds for every keystroke, system-wide."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+dependencies = [
+    "pynput>=1.7.6",
+    "sounddevice>=0.4.6",
+    "soundfile>=0.12.1",
+    "numpy>=1.22",
+    "psutil>=5.9",
+]
+
+[project.optional-dependencies]
+extra-formats = ["pydub>=0.25.1"]
+
+[project.scripts]
+keyboard = "keyboard_sound.cli:main"
+
+[tool.setuptools]
+packages = ["keyboard_sound"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+keyboard_sound = ["sounds/**/*.wav", "sounds/**/*.mp3"]
